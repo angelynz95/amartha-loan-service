@@ -10,6 +10,13 @@
   * [Investment](#investment)
   * [Disbursement](#disbursement)
 - [State Diagram](#state-diagram)
+- [Sequence Diagram](#sequence-diagram)
+  * [Create Loan](#create-loan)
+  * [Approve Loan](#approve-loan)
+  * [Get Loans](#get-loans)
+  * [Get Loan](#get-loan)
+  * [Invest Loan](#invest-loan)
+  * [Disburse Loan](#disburse-loan)
 
 ## Assumption
 - There's no requirement about how the picture proof want to be stored when approving a loan, so I assume we can use link to the document.
@@ -194,4 +201,56 @@ stateDiagram
     APPROVED --> INVESTED: total invested amount is equal to principal amount
     INVESTED --> DISBURSED: loan is given to borrower
     DISBURSED --> [*]
+```
+
+## Sequence Diagram
+
+### Create Loan
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant client as Client
+    participant loan as Loan Service
+    participant db as DB
+
+    client->>+loan: create loan
+
+    loan->>+loan: decode request
+    opt decode error or missing required key(s)
+        loan--xclient: error response<br/>400 Bad Request
+    end
+
+    loan->>+loan: validate request data
+    opt invalid request data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    loan->>+db: insert loan with state PROPOSED
+    db-->>-loan: result
+    opt error
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    loan-->>-client: success response<br>200 OK
+```
+
+### Approve Loan
+```mermaid
+```
+
+### Get Loans
+```mermaid
+```
+
+### Get Loan
+```mermaid
+```
+
+### Invest Loan
+```mermaid
+```
+
+### Disburse Loan
+```mermaid
 ```
