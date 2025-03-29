@@ -9,6 +9,7 @@
   * [Loan Approval](#loan-approval)
   * [Investment](#investment)
   * [Disbursement](#disbursement)
+- [State Diagram](#state-diagram)
 
 ## Assumption
 - There's no requirement about how the picture proof want to be stored when approving a loan, so I assume we can use link to the document.
@@ -184,3 +185,13 @@ Index
 |---|---|---|---|
 |id|id|Y|primary key on id|
 |loan_key|loan_key|Y|unique key on loan_key|
+
+## State Diagram
+```mermaid
+stateDiagram
+    [*] --> PROPOSED: loan is created
+    PROPOSED --> APPROVED: loan is approved
+    APPROVED --> INVESTED: total invested amount is equal to principal amount
+    INVESTED --> DISBURSED: loan is given to borrower
+    DISBURSED --> [*]
+```
