@@ -38,6 +38,7 @@
 - Authentication & Authorization
 - Employee & User Table
 - Send real email
+- Monitoring & Alerting
 
 ## Future Scope
 - Send email using PubSub, instead of looping & sending them one by one in a single process. Purpose:
@@ -275,7 +276,9 @@ sequenceDiagram
         loan->>+db: insert loan_approval
         db-->>-loan: result
     end
-    opt error
+    alt no rows updated
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    else other errors
         loan--xclient: error response<br/>500 Internal Server Error
     end
 
@@ -348,8 +351,120 @@ sequenceDiagram
 
 ### Invest Loan
 ```mermaid
+sequenceDiagram
+    autonumber
+
+    participant client as Client
+    participant loan as Loan Service
+    participant db as DB
+    participant notif as Notification Service
+    participant monitor as Monitoring & Alerting Tool
+
+    client->>+loan: invest loan
+
+    loan->>loan: decode request
+    opt decode error or missing required key(s)
+        loan--xclient: error response<br/>400 Bad Request
+    end
+
+    loan->>loan: validate request data
+    opt invalid request data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    loan->>+db: inquiry loan by key
+    db-->>-loan: loan
+    opt error
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    loan->>loan: validate loan data
+    note over loan: - loan state must be APPROVED<br>- request amount + loan invested amount <= loan principal amount
+    opt invalid loan data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    critical atomic
+        loan->>+db: insert investment
+        db-->>-loan: result
+
+        alt request amount + current invested amount == principal amount
+            loan->>+db: update loan by key & version<br>set invested_amount = request amount + current invested amount<br>& version = current version + 1<br>& state = INVESTED
+            db-->>-loan: result
+        else
+            loan->>+db: update loan by key & version<br>set invested_amount = request amount + current invested amount<br>& version = current version + 1
+            db-->>-loan: result
+        end
+    end
+    alt duplicate error
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    else other errors
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    opt loan state updated to INVESTED
+        par
+            loan->>+db: inquiry investments by loan key
+            db-->>-loan: investments
+            opt error
+                loan-)monitor: send error metric
+            end
+
+            loop for each investment
+                loan->>loan: build email data
+                loan-)notif: trigger send email
+            end
+        end
+    end
+
+    loan-->>-client: success response<br>200 OK
 ```
 
 ### Disburse Loan
 ```mermaid
+sequenceDiagram
+    autonumber
+
+    participant client as Client
+    participant loan as Loan Service
+    participant db as DB
+
+    client->>+loan: disburse loan
+
+    loan->>loan: decode request
+    opt decode error or missing required key(s)
+        loan--xclient: error response<br/>400 Bad Request
+    end
+
+    loan->>loan: validate request data
+    opt invalid request data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    loan->>+db: inquiry loan by key
+    db-->>-loan: loan
+    opt error
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    loan->>loan: validate loan data
+    note over loan: loan state must be INVESTED
+    opt invalid loan data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    critical atomic
+        loan->>+db: update loan by key & version<br>set state = DISBURSED<br>& version = current version + 1
+        db-->>-loan: result
+
+        loan->>+db: insert disbursement
+        db-->>-loan: result
+    end
+    alt no rows updated
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    else other errors
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    loan-->>-client: success response<br>200 OK
 ```
