@@ -216,12 +216,12 @@ sequenceDiagram
 
     client->>+loan: create loan
 
-    loan->>+loan: decode request
+    loan->>loan: decode request
     opt decode error or missing required key(s)
         loan--xclient: error response<br/>400 Bad Request
     end
 
-    loan->>+loan: validate request data
+    loan->>loan: validate request data
     opt invalid request data
         loan--xclient: error response<br/>422 Unprocessable Entity
     end
@@ -237,14 +237,113 @@ sequenceDiagram
 
 ### Approve Loan
 ```mermaid
+sequenceDiagram
+    autonumber
+
+    participant client as Client
+    participant loan as Loan Service
+    participant db as DB
+
+    client->>+loan: approve loan
+
+    loan->>loan: decode request
+    opt decode error or missing required key(s)
+        loan--xclient: error response<br/>400 Bad Request
+    end
+
+    loan->>loan: validate request data
+    opt invalid request data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    loan->>+db: inquiry loan by key
+    db-->>-loan: loan
+    opt error
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    loan->>loan: validate loan data
+    note over loan: loan state must be PROPOSED
+    opt invalid loan data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    critical atomic
+        loan->>+db: update loan by key & version<br>set state = APPROVED<br>& version = current version + 1
+        db-->>-loan: result
+
+        loan->>+db: insert loan_approval
+        db-->>-loan: result
+    end
+    opt error
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    loan-->>-client: success response<br>200 OK
 ```
 
 ### Get Loans
 ```mermaid
+sequenceDiagram
+    autonumber
+
+    participant client as Client
+    participant loan as Loan Service
+    participant db as DB
+
+    client->>+loan: get loans
+
+    loan->>loan: decode request
+    opt decode error or missing required key(s)
+        loan--xclient: error response<br/>400 Bad Request
+    end
+
+    loan->>loan: validate request data
+    opt invalid request data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    loan->>+db: inquiry loans by filter & pagination
+    db-->>-loan: loans
+    opt error
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    loan->>loan: build list response
+
+    loan-->>-client: success response<br>200 OK
 ```
 
 ### Get Loan
 ```mermaid
+sequenceDiagram
+    autonumber
+
+    participant client as Client
+    participant loan as Loan Service
+    participant db as DB
+
+    client->>+loan: get loan
+
+    loan->>loan: decode request
+    opt decode error or missing required key(s)
+        loan--xclient: error response<br/>400 Bad Request
+    end
+
+    loan->>loan: validate request data
+    opt invalid request data
+        loan--xclient: error response<br/>422 Unprocessable Entity
+    end
+
+    loan->>+db: inquiry loan by key
+    db-->>-loan: loan
+    opt error
+        loan--xclient: error response<br/>500 Internal Server Error
+    end
+
+    loan->>loan: build detail response
+
+    loan-->>-client: success response<br>200 OK
 ```
 
 ### Invest Loan
