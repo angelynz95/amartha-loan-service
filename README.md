@@ -17,6 +17,25 @@
   * [Get Loan](#get-loan)
   * [Invest Loan](#invest-loan)
   * [Disburse Loan](#disburse-loan)
+- [API Contract](#api-contract)
+  * [Create Loan](#create-loan-1)
+    + [Request](#request)
+    + [Response](#response)
+  * [Approve Loan](#approve-loan-1)
+    + [Request](#request-1)
+    + [Response](#response-1)
+  * [Get Loans](#get-loans-1)
+    + [Request](#request-2)
+    + [Response](#response-2)
+  * [Get Loan](#get-loan-1)
+    + [Request](#request-3)
+    + [Response](#response-3)
+  * [Invest Loan](#invest-loan-1)
+    + [Request](#request-4)
+    + [Response](#response-4)
+  * [Disburse Loan](#disburse-loan-1)
+    + [Request](#request-5)
+    + [Response](#response-5)
 
 ## Assumption
 - There's no requirement about how the picture proof want to be stored when approving a loan, so I assume we can use link to the document.
@@ -35,6 +54,7 @@
 - Disburse Loan
 
 ## Non-Scope
+- Unit Test (because of assignment time limitation)
 - Authentication & Authorization
 - Employee & User Table
 - Send real email
@@ -468,3 +488,149 @@ sequenceDiagram
 
     loan-->>-client: success response<br>200 OK
 ```
+
+## API Contract
+
+### Create Loan
+<table>
+ <tr>
+  <th>Path</th>
+  <td><code>/loan/create</code></td>
+ </tr>
+ <tr>
+  <th>Method</th>
+  <td>POST</td>
+ </tr>
+</table>
+
+#### Request
+Headers
+|Name|Data Type|Mandatory|Description|
+|---|---|---|---|
+|Content-Type|string|Y|content type<li>application/json</li>|
+
+Body
+<table>
+ <tr>
+  <th>Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td>borrower_id_number</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>borrower id number</td>
+ </tr>
+ <tr>
+  <td>principal_amount</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>principal amount</td>
+ </tr>
+ <tr>
+  <td>rate</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>rate</td>
+ </tr>
+ <tr>
+  <td>roi</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>roi (return of investment)</td>
+ </tr>
+ <tr>
+  <td>agreement_letter_link</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>link to agreement letter</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "borrower_id_number": "1111114101010001",
+  "principal_amount": 10000000,
+  "rate": 10,
+  "roi": 11000000,
+  "agreement_letter_link": "https://drive.google.com/file/d/e892b618945a/view"
+}
+```
+</details>
+
+#### Response
+<table>
+ <tr>
+  <th colspan="2">Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td colspan="2">message</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>message</td>
+ </tr>
+ <tr>
+  <td colspan="2">data</td>
+  <td>struct</td>
+  <td>N</td>
+  <td>data</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>key</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>loan key</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "message": "success",
+  "data": {
+    "id": 5899
+  }
+}
+```
+</details>
+
+### Approve Loan
+
+#### Request
+
+#### Response
+
+### Get Loans
+
+#### Request
+
+#### Response
+
+### Get Loan
+
+#### Request
+
+#### Response
+
+### Invest Loan
+
+#### Request
+
+#### Response
+
+### Disburse Loan
+
+#### Request
+
+#### Response
