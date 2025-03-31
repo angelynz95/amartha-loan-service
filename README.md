@@ -54,7 +54,6 @@
 - Disburse Loan
 
 ## Non-Scope
-- Unit Test (because of assignment time limitation)
 - Authentication & Authorization
 - Employee & User Table
 - Send real email
@@ -152,6 +151,7 @@ Index
 |---|---|---|---|
 |id|id|Y|primary key on id|
 |key|key|Y|unique key on key|
+|idx_state|state|N|index on state|
 
 ### Loan Approval
 Table
@@ -495,7 +495,7 @@ sequenceDiagram
 <table>
  <tr>
   <th>Path</th>
-  <td><code>/loan/create</code></td>
+  <td><code>/loans/create</code></td>
  </tr>
  <tr>
   <th>Method</th>
@@ -599,38 +599,605 @@ Body
 {
   "message": "success",
   "data": {
-    "id": 5899
+    "key": 1906440385451624682
   }
 }
 ```
 </details>
 
 ### Approve Loan
+<table>
+ <tr>
+  <th>Path</th>
+  <td><code>/loans/{key}/approve</code></td>
+ </tr>
+ <tr>
+  <th>Method</th>
+  <td>POST</td>
+ </tr>
+</table>
 
 #### Request
+Path Params
+|Name|Data Type|Mandatory|Description|
+|---|---|---|---|
+|key|uint64|Y|loan key|
+
+<details>
+<summary>example</summary>
+
+```
+POST /loans/1906440385451624700/approve
+```
+</details>
+
+Headers
+|Name|Data Type|Mandatory|Description|
+|---|---|---|---|
+|Content-Type|string|Y|content type<li>application/json</li>|
+
+Body
+<table>
+ <tr>
+  <th>Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td>approval_proof_link</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>link to approval proof</td>
+ </tr>
+ <tr>
+  <td>validator_id</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>validator employee id</td>
+ </tr>
+ <tr>
+  <td>approval_date</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>approval date, format YYYY-MM-DD</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "approval_proof_link": "https://drive.google.com/file/d/d7921805c400/view",
+  "validator_id": 4276,
+  "approval_date": "2025-03-24"
+}
+```
+</details>
 
 #### Response
+<table>
+ <tr>
+  <th colspan="2">Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td colspan="2">message</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>message</td>
+ </tr>
+ <tr>
+  <td colspan="2">data</td>
+  <td>struct</td>
+  <td>N</td>
+  <td>data</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>key</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>loan key</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "message": "success",
+  "data": {
+    "key": 1906440385451624700
+  }
+}
+```
+</details>
 
 ### Get Loans
+<table>
+ <tr>
+  <th>Path</th>
+  <td><code>/loans</code></td>
+ </tr>
+ <tr>
+  <th>Method</th>
+  <td>GET</td>
+ </tr>
+</table>
 
 #### Request
+Query Params
+<table>
+ <tr>
+  <th>Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td>state</td>
+  <td>string</td>
+  <td>N</td>
+  <td>state, default empty<li>PROPOSED</li><li>APPROVED</li><li>INVESTED</li><li>DISBURSED</li></li></td>
+ </tr>
+ <tr>
+  <td>page</td>
+  <td>int</td>
+  <td>N</td>
+  <td>page, default 1</td>
+ </tr>
+ <tr>
+  <td>per_page</td>
+  <td>int</td>
+  <td>N</td>
+  <td>number of items per page, default 5</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+GET /loans?state=APPROVED&page=2&per_page=10
+```
+</details>
 
 #### Response
+<table>
+ <tr>
+  <th colspan="2">Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td colspan="2">message</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>message</td>
+ </tr>
+ <tr>
+  <td colspan="2">data</td>
+  <td>array</td>
+  <td>N</td>
+  <td>data</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>key</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>loan key</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>principal_amount</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>principal amount</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>invested_amount</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>invested amount</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>rate</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>rate</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>roi</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>roi (return of investment)</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>state</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>state<li>PROPOSED</li><li>APPROVED</li><li>INVESTED</li><li>DISBURSED</li></td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>created_at</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>created at</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "message": "success",
+  "data": [
+    {
+      "key": 1906440385451624700,
+      "principal_amount": 10000000,
+      "invested_amount": 0,
+      "rate": 10,
+      "roi": 11000000,
+      "state": "APPROVED",
+      "created_at": "2025-03-22T21:53:45+07:00"
+    }
+  ]
+}
+```
+</details>
 
 ### Get Loan
+<table>
+ <tr>
+  <th>Path</th>
+  <td><code>/loans/{key}</code></td>
+ </tr>
+ <tr>
+  <th>Method</th>
+  <td>GET</td>
+ </tr>
+</table>
 
 #### Request
+Path Params
+|Name|Data Type|Mandatory|Description|
+|---|---|---|---|
+|key|uint64|Y|loan key|
+
+<details>
+<summary>example</summary>
+
+```
+GET /loans/1906440385451624700
+```
+</details>
 
 #### Response
+<table>
+ <tr>
+  <th colspan="2">Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td colspan="2">message</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>message</td>
+ </tr>
+ <tr>
+  <td colspan="2">data</td>
+  <td>struct</td>
+  <td>N</td>
+  <td>data</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>key</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>loan key</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>principal_amount</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>principal amount</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>invested_amount</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>invested amount</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>rate</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>rate</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>roi</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>roi (return of investment)</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>state</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>state<li>PROPOSED</li><li>APPROVED</li><li>INVESTED</li><li>DISBURSED</li></td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>created_at</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>created at</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "message": "success",
+  "data": {
+    "key": 1906440385451624700,
+    "principal_amount": 10000000,
+    "invested_amount": 0,
+    "rate": 10,
+    "roi": 11000000,
+    "state": "APPROVED",
+    "created_at": "2025-03-22T21:53:45+07:00"
+  }
+}
+```
+</details>
 
 ### Invest Loan
+<table>
+ <tr>
+  <th>Path</th>
+  <td><code>/loans/{key}/invest</code></td>
+ </tr>
+ <tr>
+  <th>Method</th>
+  <td>POST</td>
+ </tr>
+</table>
 
 #### Request
+Path Params
+|Name|Data Type|Mandatory|Description|
+|---|---|---|---|
+|key|uint64|Y|loan key|
+
+<details>
+<summary>example</summary>
+
+```
+POST /loans/1906440385451624700/invest
+```
+</details>
+
+Headers
+|Name|Data Type|Mandatory|Description|
+|---|---|---|---|
+|Content-Type|string|Y|content type<li>application/json</li>|
+
+Body
+<table>
+ <tr>
+  <th>Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td>amount</td>
+  <td>float64</td>
+  <td>Y</td>
+  <td>investment amount</td>
+ </tr>
+ <tr>
+  <td>investor_email</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>investor email</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "amount": 1000000,
+  "investor_email": "investor@gmail.com"
+}
+```
+</details>
 
 #### Response
+<table>
+ <tr>
+  <th colspan="2">Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td colspan="2">message</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>message</td>
+ </tr>
+ <tr>
+  <td colspan="2">data</td>
+  <td>struct</td>
+  <td>N</td>
+  <td>data</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>key</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>loan key</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>investment_key</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>investment key</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "message": "success",
+  "data": {
+    "key": 1906440385451624700,
+    "investment_key": 1906724875374789400
+  }
+}
+```
+</details>
 
 ### Disburse Loan
+<table>
+ <tr>
+  <th>Path</th>
+  <td><code>/loans/{key}/disburse</code></td>
+ </tr>
+ <tr>
+  <th>Method</th>
+  <td>POST</td>
+ </tr>
+</table>
 
 #### Request
+Path Params
+|Name|Data Type|Mandatory|Description|
+|---|---|---|---|
+|key|uint64|Y|loan key|
+
+<details>
+<summary>example</summary>
+
+```
+POST /loans/1906440385451624700/disburse
+```
+</details>
+
+Headers
+|Name|Data Type|Mandatory|Description|
+|---|---|---|---|
+|Content-Type|string|Y|content type<li>application/json</li>|
+
+Body
+<table>
+ <tr>
+  <th>Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td>signed_agreement_letter_link</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>link to signed agreement letter</td>
+ </tr>
+ <tr>
+  <td>field_officer_id</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>field officer employee id</td>
+ </tr>
+ <tr>
+  <td>disbursement_date</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>disbursement date, format YYYY-MM-DD</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "signed_agreement_letter_link": "https://drive.google.com/file/d/0a17a8e51ae0/view",
+  "field_officer_id": 4329,
+  "disbursement_date": "2025-03-29"
+}
+```
+</details>
 
 #### Response
+<table>
+ <tr>
+  <th colspan="2">Name</th>
+  <th>Data Type</th>
+  <th>Mandatory</th>
+  <th>Description</th>
+ </tr>
+ <tr>
+  <td colspan="2">message</td>
+  <td>string</td>
+  <td>Y</td>
+  <td>message</td>
+ </tr>
+ <tr>
+  <td colspan="2">data</td>
+  <td>struct</td>
+  <td>N</td>
+  <td>data</td>
+ </tr>
+ <tr>
+  <td></td>
+  <td>key</td>
+  <td>uint64</td>
+  <td>Y</td>
+  <td>loan key</td>
+ </tr>
+</table>
+
+<details>
+<summary>example</summary>
+
+```json
+{
+  "message": "success",
+  "data": {
+    "key": 1906440385451624700
+  }
+}
+```
+</details>
